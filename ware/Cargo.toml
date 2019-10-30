@@ -1,0 +1,7 @@
+[package]
+name = "ware"
+version = "0.1.0"
+authors = ["marisa <mokou@posteo.de>"]
+edition = "2018"
+
+[dependencies]
