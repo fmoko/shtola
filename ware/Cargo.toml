@@ -1,7 +1,15 @@
 [package]
 name = "ware"
+description = "Immutable middleware chains"
 version = "0.1.0"
 authors = ["marisa <mokou@posteo.de>"]
 edition = "2018"
+repository = "https://github.com/fmoko/shtola/tree/master/ware"
+documentation = "https://docs.rs/ware"
+homepage = "https://github.com/fmoko/shtola/tree/master/ware"
+readme = "README.md"
+categories = ["data-structures"]
+keywords = ["middleware"]
+license = "Prosperity"
 
 [dependencies]
