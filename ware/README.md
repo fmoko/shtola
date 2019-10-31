@@ -44,3 +44,8 @@ recommend using immutable data structures that are efficient when duplicating va
 ## Documentation
 
 The documentation is available at https://docs.rs/ware.
+
+## License
+
+Ware is licensed under the Prosperity Public License (see [LICENSE](./LICENSE)).
+You cannot use it commercially without my permission.
