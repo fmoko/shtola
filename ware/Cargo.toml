@@ -10,6 +10,6 @@ homepage = "https://github.com/fmoko/shtola/tree/master/ware"
 readme = "README.md"
 categories = ["data-structures"]
 keywords = ["middleware"]
-license = "Prosperity"
+license-file = "LICENSE"
 
 [dependencies]
