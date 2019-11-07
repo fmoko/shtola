@@ -1,0 +1,17 @@
+[package]
+name = "shtola"
+description = "Minimal static site generator"
+version = "0.1.0"
+authors = ["marisa <mokou@posteo.de>"]
+edition = "2018"
+repository = "https://github.com/fmoko/shtola/tree/master/shtola"
+documentation = "https://docs.rs/shtola"
+homepage = "https://github.com/fmoko/shtola/tree/master/shtola"
+readme = "README.md"
+license-file = "LICENSE"
+
+[dependencies]
+log = "0.4.8"
+walkdir = "2.2.9"
+ware = "0.1.0"
+im = "13.0.0"
