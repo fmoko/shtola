@@ -12,10 +12,7 @@ pub fn lexer(text: &str) -> (String, String) {
 			content_slice.trim().to_string(),
 		)
 	} else {
-		(
-			String::new(),
-			text.to_string(),
-		)
+		(String::new(), text.to_string())
 	}
 }
 

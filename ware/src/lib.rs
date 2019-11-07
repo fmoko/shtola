@@ -120,8 +120,10 @@ impl<R, S> Ware2<R, S> {
 	/// Run the registered middleware functions with the given value to pass
 	/// through. Returns whatever the last registered middleware function
 	/// returns.
-	pub fn run (&self, arg1: R, arg2: S) -> (R, S) {
-		self.fns.iter().fold((arg1, arg2), |acc, func| func(acc.0, acc.1))
+	pub fn run(&self, arg1: R, arg2: S) -> (R, S) {
+		self.fns
+			.iter()
+			.fold((arg1, arg2), |acc, func| func(acc.0, acc.1))
 	}
 }
 

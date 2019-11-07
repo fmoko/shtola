@@ -1,12 +1,13 @@
-use ware::Ware;
-use im::HashMap;
-use walkdir::WalkDir;
-use yaml_rust::Yaml;
 use pathdiff::diff_paths;
-use std::path::PathBuf;
-use std::fs::{File, canonicalize};
-use std::io::Read;
 use std::default::Default;
+use std::fs::{canonicalize, File};
+use std::io::Read;
+use std::path::PathBuf;
+use walkdir::WalkDir;
+
+pub use im::HashMap;
+pub use ware::Ware;
+pub use yaml_rust::Yaml;
 
 mod frontmatter;
 
@@ -18,8 +19,14 @@ pub struct Shtola {
 impl Shtola {
 	pub fn new() -> Shtola {
 		let config: Config = Default::default();
-		let ir = IR { files: HashMap::new(), config };
-		Shtola { ware: Ware::new(), ir }
+		let ir = IR {
+			files: HashMap::new(),
+			config,
+		};
+		Shtola {
+			ware: Ware::new(),
+			ir,
+		}
 	}
 
 	pub fn ignores(&mut self, vec: &mut Vec<PathBuf>) {
@@ -71,7 +78,6 @@ pub struct Config {
 	clean: bool,
 	frontmatter: bool,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct ShFile {
