@@ -37,7 +37,7 @@ impl Shtola {
 		self.ir.config.frontmatter = b;
 	}
 
-	pub fn r#use(&mut self, func: Box<dyn Fn(IR) -> IR>) {
+	pub fn register(&mut self, func: Box<dyn Fn(IR) -> IR>) {
 		self.ware.wrap(func);
 	}
 
@@ -46,7 +46,6 @@ impl Shtola {
 		// read files
 		let result_ir = self.ware.run(self.ir.clone());
 		// write files
-		// return ir
 		result_ir
 	}
 }
@@ -72,4 +71,19 @@ pub struct Config {
 pub struct ShFile {
 	frontmatter: HashMap<String, String>,
 	content: Vec<u8>,
+}
+
+#[test]
+fn it_works() {
+	let mut s = Shtola::new("./");
+	s.source("./");
+	s.destination("./dest");
+	s.register(Box::new(|mut ir| {
+		ir.files.insert(PathBuf::from("cool.md"), ShFile { frontmatter: HashMap::new(), content: Vec::new() });
+		ir
+	}));
+	let r = s.build();
+	assert_eq!(r.files.len(), 1);
+	let keys: Vec<&PathBuf> = r.files.keys().collect();
+	assert_eq!(keys[0].to_str().unwrap(), "cool.md");
 }
