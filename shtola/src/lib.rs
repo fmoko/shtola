@@ -1,7 +1,14 @@
 use ware::Ware;
 use im::HashMap;
+use walkdir::WalkDir;
+use yaml_rust::Yaml;
+use pathdiff::diff_paths;
 use std::path::PathBuf;
+use std::fs::{File, canonicalize};
+use std::io::Read;
 use std::default::Default;
+
+mod frontmatter;
 
 pub struct Shtola {
 	ware: Ware<IR>,
@@ -9,9 +16,8 @@ pub struct Shtola {
 }
 
 impl Shtola {
-	pub fn new<T: Into<PathBuf>>(dir: T) -> Shtola {
-		let mut config: Config = Default::default();
-		config.directory = dir.into();
+	pub fn new() -> Shtola {
+		let config: Config = Default::default();
 		let ir = IR { files: HashMap::new(), config };
 		Shtola { ware: Ware::new(), ir }
 	}
@@ -22,11 +28,11 @@ impl Shtola {
 	}
 
 	pub fn source<T: Into<PathBuf>>(&mut self, path: T) {
-		self.ir.config.source = path.into();
+		self.ir.config.source = canonicalize(path.into()).unwrap();
 	}
 
 	pub fn destination<T: Into<PathBuf>>(&mut self, path: T) {
-		self.ir.config.destination = path.into();
+		self.ir.config.destination = canonicalize(path.into()).unwrap();
 	}
 
 	pub fn clean(&mut self, b: bool) {
@@ -41,25 +47,25 @@ impl Shtola {
 		self.ware.wrap(func);
 	}
 
-	pub fn build(&mut self) -> IR {
-		// if clean is set, remove dest dir
-		// read files
+	pub fn build(&mut self) -> Result<IR, std::io::Error> {
+		// clean if set
+		let files = read_dir(&self.ir.config.source)?;
+		self.ir.files = files;
 		let result_ir = self.ware.run(self.ir.clone());
 		// write files
-		result_ir
+		Ok(result_ir)
 	}
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct IR {
 	files: HashMap<PathBuf, ShFile>,
 	config: Config,
 }
 
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Config {
 	ignores: Vec<PathBuf>,
-	directory: PathBuf,
 	source: PathBuf,
 	destination: PathBuf,
 	clean: bool,
@@ -67,23 +73,42 @@ pub struct Config {
 }
 
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ShFile {
-	frontmatter: HashMap<String, String>,
+	frontmatter: Vec<Yaml>,
 	content: Vec<u8>,
 }
 
+fn read_dir(source: &PathBuf) -> Result<HashMap<PathBuf, ShFile>, std::io::Error> {
+	let mut result = HashMap::new();
+	let iters = WalkDir::new(source)
+		.into_iter()
+		.filter_map(|e| e.ok())
+		.filter(|e| !e.path().is_dir());
+	for entry in iters {
+		let path = entry.path();
+		let mut content = String::new();
+		File::open(path)?.read_to_string(&mut content)?;
+		let (matter, content) = frontmatter::lexer(&content);
+		let yaml = frontmatter::to_yaml(&matter);
+		let file = ShFile {
+			frontmatter: yaml,
+			content: content.into(),
+		};
+		let rel_path = diff_paths(path, source).unwrap();
+		result.insert(rel_path, file);
+	}
+	Ok(result)
+}
+
 #[test]
-fn it_works() {
-	let mut s = Shtola::new("./");
-	s.source("./");
-	s.destination("./dest");
-	s.register(Box::new(|mut ir| {
-		ir.files.insert(PathBuf::from("cool.md"), ShFile { frontmatter: HashMap::new(), content: Vec::new() });
-		ir
-	}));
-	let r = s.build();
+fn read_works() {
+	let mut s = Shtola::new();
+	s.source("../fixtures/simple");
+	s.destination("./");
+	s.clean(true);
+	let r = s.build().unwrap();
 	assert_eq!(r.files.len(), 1);
 	let keys: Vec<&PathBuf> = r.files.keys().collect();
-	assert_eq!(keys[0].to_str().unwrap(), "cool.md");
+	assert_eq!(keys[0].to_str().unwrap(), "hello.txt");
 }
