@@ -1,7 +1,7 @@
 use pathdiff::diff_paths;
 use std::default::Default;
-use std::fs::{canonicalize, File};
-use std::io::Read;
+use std::fs;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
@@ -35,11 +35,12 @@ impl Shtola {
 	}
 
 	pub fn source<T: Into<PathBuf>>(&mut self, path: T) {
-		self.ir.config.source = canonicalize(path.into()).unwrap();
+		self.ir.config.source = fs::canonicalize(path.into()).unwrap();
 	}
 
-	pub fn destination<T: Into<PathBuf>>(&mut self, path: T) {
-		self.ir.config.destination = canonicalize(path.into()).unwrap();
+	pub fn destination<T: Into<PathBuf> + Clone>(&mut self, path: T) {
+		fs::create_dir_all(path.clone().into()).expect("Unable to create destination directory!");
+		self.ir.config.destination = fs::canonicalize(path.into()).unwrap();
 	}
 
 	pub fn clean(&mut self, b: bool) {
@@ -59,7 +60,7 @@ impl Shtola {
 		let files = read_dir(&self.ir.config.source)?;
 		self.ir.files = files;
 		let result_ir = self.ware.run(self.ir.clone());
-		// write files
+		write_dir(result_ir.clone(), &self.ir.config.destination)?;
 		Ok(result_ir)
 	}
 }
@@ -94,7 +95,7 @@ fn read_dir(source: &PathBuf) -> Result<HashMap<PathBuf, ShFile>, std::io::Error
 	for entry in iters {
 		let path = entry.path();
 		let mut content = String::new();
-		File::open(path)?.read_to_string(&mut content)?;
+		fs::File::open(path)?.read_to_string(&mut content)?;
 		let (matter, content) = frontmatter::lexer(&content);
 		let yaml = frontmatter::to_yaml(&matter);
 		let file = ShFile {
@@ -107,14 +108,46 @@ fn read_dir(source: &PathBuf) -> Result<HashMap<PathBuf, ShFile>, std::io::Error
 	Ok(result)
 }
 
+fn write_dir(ir: IR, dest: &PathBuf) -> Result<(), std::io::Error> {
+	for (path, file) in ir.files {
+		let dest_path = dest.join(path);
+		fs::create_dir_all(dest_path.parent().unwrap()).expect("Unable to create destination subdirectory!");
+		fs::File::create(dest_path)?.write_all(&file.content)?;
+	}
+	Ok(())
+}
+
 #[test]
 fn read_works() {
 	let mut s = Shtola::new();
 	s.source("../fixtures/simple");
 	s.destination("./");
-	s.clean(true);
 	let r = s.build().unwrap();
 	assert_eq!(r.files.len(), 1);
 	let keys: Vec<&PathBuf> = r.files.keys().collect();
 	assert_eq!(keys[0].to_str().unwrap(), "hello.txt");
+}
+
+#[test]
+fn write_works() {
+	let mut s = Shtola::new();
+	s.source("../fixtures/simple");
+	s.destination("./dest");
+	let mw = Box::new(|ir: IR| {
+		let mut update_hash: HashMap<PathBuf, ShFile> = HashMap::new();
+		for (k, v) in &ir.files {
+			update_hash.insert(k.into(), ShFile {
+				frontmatter: v.frontmatter.clone(),
+				content: "hello".into(),
+			});
+		}
+		IR { files: update_hash.union(ir.files), ..ir }
+	});
+	s.register(mw);
+	s.build().unwrap();
+	let dpath = PathBuf::from("dest/hello.txt");
+	assert!(dpath.exists());
+	let file = &fs::read(dpath).unwrap();
+	let fstring = String::from_utf8_lossy(file);
+	assert_eq!(fstring, "hello");
 }
