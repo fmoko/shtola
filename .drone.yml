@@ -5,11 +5,11 @@ name: default
 
 steps:
   - name: test
-    image: rust:alpine
+    image: rust:slim
     commands:
       - cargo test
   - name: coverage
-    image: rust:alpine
+    image: rust:slim
     commands:
       - cargo install cargo-tarpaulin
       - cargo tarpaulin --coveralls ${COVERALLS}
