@@ -7,8 +7,11 @@ steps:
   - name: test
     image: rust:alpine
     commands:
-      - cargo install cargo-tarpaulin
       - cargo test
+  - name: coverage
+    image: rust:alpine
+    commands:
+      - cargo install cargo-tarpaulin
       - cargo tarpaulin --coveralls ${COVERALLS}
     environment:
       COVERALLS:
