@@ -60,7 +60,7 @@ impl Shtola {
 			fs::remove_dir_all(&self.ir.config.destination)?;
 			fs::create_dir_all(&self.ir.config.destination).expect("Unable to recreate destination directory!");
 		}
-		let files = read_dir(&self.ir.config.source)?;
+		let files = read_dir(&self.ir.config.source, self.ir.config.frontmatter)?;
 		self.ir.files = files;
 		let result_ir = self.ware.run(self.ir.clone());
 		write_dir(result_ir.clone(), &self.ir.config.destination)?;
@@ -89,7 +89,7 @@ pub struct ShFile {
 	content: Vec<u8>,
 }
 
-fn read_dir(source: &PathBuf) -> Result<HashMap<PathBuf, ShFile>, std::io::Error> {
+fn read_dir(source: &PathBuf, frontmatter: bool) -> Result<HashMap<PathBuf, ShFile>, std::io::Error> {
 	let mut result = HashMap::new();
 	let iters = WalkDir::new(source)
 		.into_iter()
@@ -97,14 +97,22 @@ fn read_dir(source: &PathBuf) -> Result<HashMap<PathBuf, ShFile>, std::io::Error
 		.filter(|e| !e.path().is_dir());
 	for entry in iters {
 		let path = entry.path();
+		let file: ShFile;
 		let mut content = String::new();
 		fs::File::open(path)?.read_to_string(&mut content)?;
-		let (matter, content) = frontmatter::lexer(&content);
-		let yaml = frontmatter::to_yaml(&matter);
-		let file = ShFile {
-			frontmatter: yaml,
-			content: content.into(),
-		};
+		if !frontmatter {
+			let (matter, content) = frontmatter::lexer(&content);
+			let yaml = frontmatter::to_yaml(&matter);
+			file = ShFile {
+				frontmatter: yaml,
+				content: content.into(),
+			};
+		} else {
+			file = ShFile {
+				frontmatter: Vec::new(),
+				content: content.into(),
+			};
+		}
 		let rel_path = diff_paths(path, source).unwrap();
 		result.insert(rel_path, file);
 	}
@@ -167,4 +175,15 @@ fn write_works() {
 	let file = &fs::read(dpath).unwrap();
 	let fstring = String::from_utf8_lossy(file);
 	assert_eq!(fstring, "hello");
+}
+
+#[test]
+fn frontmatter_works() {
+	let mut s = Shtola::new();
+	s.source("../fixtures/frontmatter");
+	s.destination("../fixtures/dest_matter1");
+	s.clean(true);
+	let r = s.build().unwrap();
+	let (_, matter_file) = r.files.iter().last().unwrap();
+	assert_eq!(matter_file.frontmatter[0].as_hash().unwrap().get(&Yaml::from_str("hello")).unwrap().as_str().unwrap(), "bro");
 }
