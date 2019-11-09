@@ -56,7 +56,10 @@ impl Shtola {
 	}
 
 	pub fn build(&mut self) -> Result<IR, std::io::Error> {
-		// clean if set
+		if self.ir.config.clean {
+			fs::remove_dir_all(&self.ir.config.destination)?;
+			fs::create_dir_all(&self.ir.config.destination).expect("Unable to recreate destination directory!");
+		}
 		let files = read_dir(&self.ir.config.source)?;
 		self.ir.files = files;
 		let result_ir = self.ware.run(self.ir.clone());
@@ -129,10 +132,24 @@ fn read_works() {
 }
 
 #[test]
+fn clean_works() {
+	let mut s = Shtola::new();
+	s.source("../fixtures/simple");
+	s.destination("../fixtures/dest_clean");
+	s.clean(true);
+	fs::create_dir_all("../fixtures/dest_clean").unwrap();
+	fs::write("../fixtures/dest_clean/blah.foo", "").unwrap();
+	s.build().unwrap();
+	let fpath = PathBuf::from("../fixtures/dest_clean/blah.foo");
+	assert_eq!(fpath.exists(), false);
+}
+
+#[test]
 fn write_works() {
 	let mut s = Shtola::new();
 	s.source("../fixtures/simple");
-	s.destination("./dest");
+	s.destination("../fixtures/dest");
+	s.clean(true);
 	let mw = Box::new(|ir: IR| {
 		let mut update_hash: HashMap<PathBuf, ShFile> = HashMap::new();
 		for (k, v) in &ir.files {
@@ -145,7 +162,7 @@ fn write_works() {
 	});
 	s.register(mw);
 	s.build().unwrap();
-	let dpath = PathBuf::from("dest/hello.txt");
+	let dpath = PathBuf::from("../fixtures/dest/hello.txt");
 	assert!(dpath.exists());
 	let file = &fs::read(dpath).unwrap();
 	let fstring = String::from_utf8_lossy(file);
