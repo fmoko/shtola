@@ -220,16 +220,14 @@ fn frontmatter_works() {
 	s.clean(true);
 	let r = s.build().unwrap();
 	let (_, matter_file) = r.files.iter().last().unwrap();
-	assert_eq!(
-		matter_file.frontmatter[0]
-			.as_hash()
-			.unwrap()
-			.get(&Yaml::from_str("hello"))
-			.unwrap()
-			.as_str()
-			.unwrap(),
-		"bro"
-	);
+	let frontmatter = matter_file.frontmatter[0]
+		.as_hash()
+		.unwrap()
+		.get(&Yaml::from_str("hello"))
+		.unwrap()
+		.as_str()
+		.unwrap();
+	assert_eq!(frontmatter, "bro");
 }
 
 #[test]
