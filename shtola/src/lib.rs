@@ -74,13 +74,25 @@ pub struct IR {
 	config: Config,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Config {
 	ignores: Vec<PathBuf>,
 	source: PathBuf,
 	destination: PathBuf,
 	clean: bool,
 	frontmatter: bool,
+}
+
+impl Default for Config {
+	fn default() -> Self {
+		Config {
+			ignores: Vec::new(),
+			source: PathBuf::from("."),
+			destination: PathBuf::from("./dest"),
+			clean: false,
+			frontmatter: true,
+		}
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -100,7 +112,7 @@ fn read_dir(source: &PathBuf, frontmatter: bool) -> Result<HashMap<PathBuf, ShFi
 		let file: ShFile;
 		let mut content = String::new();
 		fs::File::open(path)?.read_to_string(&mut content)?;
-		if !frontmatter {
+		if frontmatter {
 			let (matter, content) = frontmatter::lexer(&content);
 			let yaml = frontmatter::to_yaml(&matter);
 			file = ShFile {
@@ -186,4 +198,17 @@ fn frontmatter_works() {
 	let r = s.build().unwrap();
 	let (_, matter_file) = r.files.iter().last().unwrap();
 	assert_eq!(matter_file.frontmatter[0].as_hash().unwrap().get(&Yaml::from_str("hello")).unwrap().as_str().unwrap(), "bro");
+}
+
+#[test]
+fn no_frontmatter_works() {
+	let mut s = Shtola::new();
+	s.source("../fixtures/frontmatter");
+	s.destination("../fixtures/dest_matter2");
+	s.clean(true);
+	s.frontmatter(false);
+	let r = s.build().unwrap();
+	let (_, matter_file) = r.files.iter().last().unwrap();
+	dbg!(matter_file);
+	assert!(matter_file.frontmatter.is_empty());
 }
