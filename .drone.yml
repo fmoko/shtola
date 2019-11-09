@@ -4,11 +4,10 @@ type: docker
 name: default
 
 steps:
-	- name: test ware
+	- name: test
 	  image: rust:alpine
 		commands:
 			- cargo install cargo-tarpaulin
-			- cd ware
 			- cargo test
 			- cargo tarpaulin --coveralls ${COVERALLS}
 		environment:
