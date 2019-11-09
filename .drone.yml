@@ -8,11 +8,3 @@ steps:
     image: rust
     commands:
       - cargo test
-  - name: coverage
-    image: rust
-    commands:
-      - cargo install cargo-tarpaulin
-      - cargo tarpaulin --coveralls $COVERALLS
-    environment:
-      COVERALLS:
-        from_secret: coveralls_id
