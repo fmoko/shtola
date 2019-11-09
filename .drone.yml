@@ -11,9 +11,8 @@ steps:
   - name: coverage
     image: rust
     commands:
-      - apt install openssl libssl-dev
       - cargo install cargo-tarpaulin
-      - cargo tarpaulin --coveralls ${COVERALLS}
+      - cargo tarpaulin --coveralls $COVERALLS
     environment:
       COVERALLS:
         from_secret: coveralls_id
