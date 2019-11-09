@@ -124,7 +124,7 @@ fn write_dir(ir: IR, dest: &PathBuf) -> Result<(), std::io::Error> {
 fn read_works() {
 	let mut s = Shtola::new();
 	s.source("../fixtures/simple");
-	s.destination("./");
+	s.destination("../fixtures/dest_read");
 	let r = s.build().unwrap();
 	assert_eq!(r.files.len(), 1);
 	let keys: Vec<&PathBuf> = r.files.keys().collect();
@@ -148,7 +148,7 @@ fn clean_works() {
 fn write_works() {
 	let mut s = Shtola::new();
 	s.source("../fixtures/simple");
-	s.destination("../fixtures/dest");
+	s.destination("../fixtures/dest_write");
 	s.clean(true);
 	let mw = Box::new(|ir: IR| {
 		let mut update_hash: HashMap<PathBuf, ShFile> = HashMap::new();
@@ -162,7 +162,7 @@ fn write_works() {
 	});
 	s.register(mw);
 	s.build().unwrap();
-	let dpath = PathBuf::from("../fixtures/dest/hello.txt");
+	let dpath = PathBuf::from("../fixtures/dest_write/hello.txt");
 	assert!(dpath.exists());
 	let file = &fs::read(dpath).unwrap();
 	let fstring = String::from_utf8_lossy(file);
