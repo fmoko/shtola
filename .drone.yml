@@ -4,12 +4,12 @@ type: docker
 name: default
 
 steps:
-	- name: test
-	  image: rust:alpine
-		commands:
-			- cargo install cargo-tarpaulin
-			- cargo test
-			- cargo tarpaulin --coveralls ${COVERALLS}
-		environment:
-			COVERALLS:
-				from_secret: coveralls_id
+  - name: test
+    image: rust:alpine
+    commands:
+      - cargo install cargo-tarpaulin
+      - cargo test
+      - cargo tarpaulin --coveralls ${COVERALLS}
+    environment:
+      COVERALLS:
+        from_secret: coveralls_id
