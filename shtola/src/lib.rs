@@ -4,6 +4,7 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use walkdir::WalkDir;
+use globset::{GlobSetBuilder, Glob};
 
 pub use im::HashMap;
 pub use ware::Ware;
@@ -29,7 +30,7 @@ impl Shtola {
 		}
 	}
 
-	pub fn ignores(&mut self, vec: &mut Vec<PathBuf>) {
+	pub fn ignores(&mut self, vec: &mut Vec<String>) {
 		self.ir.config.ignores.append(vec);
 		self.ir.config.ignores.dedup();
 	}
@@ -60,8 +61,19 @@ impl Shtola {
 			fs::remove_dir_all(&self.ir.config.destination)?;
 			fs::create_dir_all(&self.ir.config.destination).expect("Unable to recreate destination directory!");
 		}
-		let files = read_dir(&self.ir.config.source, self.ir.config.frontmatter)?;
-		self.ir.files = files;
+
+		let mut builder = GlobSetBuilder::new();
+		for item in &self.ir.config.ignores {
+			builder.add(Glob::new(item).unwrap());
+		}
+		let set = builder.build().unwrap();
+		let unfiltered_files = read_dir(&self.ir.config.source, self.ir.config.frontmatter)?;
+		let files = unfiltered_files.iter().filter(|(p, _)| {
+			let path = p.to_str().unwrap();
+			!set.is_match(path)
+		});
+
+		self.ir.files = files.cloned().collect();
 		let result_ir = self.ware.run(self.ir.clone());
 		write_dir(result_ir.clone(), &self.ir.config.destination)?;
 		Ok(result_ir)
@@ -76,7 +88,7 @@ pub struct IR {
 
 #[derive(Debug, Clone)]
 pub struct Config {
-	ignores: Vec<PathBuf>,
+	ignores: Vec<String>,
 	source: PathBuf,
 	destination: PathBuf,
 	clean: bool,
@@ -211,4 +223,17 @@ fn no_frontmatter_works() {
 	let (_, matter_file) = r.files.iter().last().unwrap();
 	dbg!(matter_file);
 	assert!(matter_file.frontmatter.is_empty());
+}
+
+#[test]
+fn ignore_works() {
+	let mut s = Shtola::new();
+	s.source("../fixtures/ignore");
+	s.destination("../fixtures/dest_ignore");
+	s.ignores(&mut vec!["ignored.md".to_string()]);
+	s.clean(true);
+	let r = s.build().unwrap();
+	assert_eq!(r.files.len(), 1);
+	let (path, _) = r.files.iter().last().unwrap();
+	assert_eq!(path.to_str().unwrap(), "not_ignored.md");
 }
