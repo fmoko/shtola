@@ -11,6 +11,7 @@ steps:
   - name: coverage
     image: rust:slim
     commands:
+      - apt install openssl libssl-dev
       - cargo install cargo-tarpaulin
       - cargo tarpaulin --coveralls ${COVERALLS}
     environment:
