@@ -1,10 +1,10 @@
+use globset::{Glob, GlobSetBuilder};
 use pathdiff::diff_paths;
 use std::default::Default;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use walkdir::WalkDir;
-use globset::{GlobSetBuilder, Glob};
 
 pub use im::HashMap;
 pub use ware::Ware;
@@ -59,7 +59,8 @@ impl Shtola {
 	pub fn build(&mut self) -> Result<IR, std::io::Error> {
 		if self.ir.config.clean {
 			fs::remove_dir_all(&self.ir.config.destination)?;
-			fs::create_dir_all(&self.ir.config.destination).expect("Unable to recreate destination directory!");
+			fs::create_dir_all(&self.ir.config.destination)
+				.expect("Unable to recreate destination directory!");
 		}
 
 		let mut builder = GlobSetBuilder::new();
@@ -113,7 +114,10 @@ pub struct ShFile {
 	content: Vec<u8>,
 }
 
-fn read_dir(source: &PathBuf, frontmatter: bool) -> Result<HashMap<PathBuf, ShFile>, std::io::Error> {
+fn read_dir(
+	source: &PathBuf,
+	frontmatter: bool,
+) -> Result<HashMap<PathBuf, ShFile>, std::io::Error> {
 	let mut result = HashMap::new();
 	let iters = WalkDir::new(source)
 		.into_iter()
@@ -146,7 +150,8 @@ fn read_dir(source: &PathBuf, frontmatter: bool) -> Result<HashMap<PathBuf, ShFi
 fn write_dir(ir: IR, dest: &PathBuf) -> Result<(), std::io::Error> {
 	for (path, file) in ir.files {
 		let dest_path = dest.join(path);
-		fs::create_dir_all(dest_path.parent().unwrap()).expect("Unable to create destination subdirectory!");
+		fs::create_dir_all(dest_path.parent().unwrap())
+			.expect("Unable to create destination subdirectory!");
 		fs::File::create(dest_path)?.write_all(&file.content)?;
 	}
 	Ok(())
@@ -185,12 +190,18 @@ fn write_works() {
 	let mw = Box::new(|ir: IR| {
 		let mut update_hash: HashMap<PathBuf, ShFile> = HashMap::new();
 		for (k, v) in &ir.files {
-			update_hash.insert(k.into(), ShFile {
-				frontmatter: v.frontmatter.clone(),
-				content: "hello".into(),
-			});
+			update_hash.insert(
+				k.into(),
+				ShFile {
+					frontmatter: v.frontmatter.clone(),
+					content: "hello".into(),
+				},
+			);
 		}
-		IR { files: update_hash.union(ir.files), ..ir }
+		IR {
+			files: update_hash.union(ir.files),
+			..ir
+		}
 	});
 	s.register(mw);
 	s.build().unwrap();
@@ -209,7 +220,16 @@ fn frontmatter_works() {
 	s.clean(true);
 	let r = s.build().unwrap();
 	let (_, matter_file) = r.files.iter().last().unwrap();
-	assert_eq!(matter_file.frontmatter[0].as_hash().unwrap().get(&Yaml::from_str("hello")).unwrap().as_str().unwrap(), "bro");
+	assert_eq!(
+		matter_file.frontmatter[0]
+			.as_hash()
+			.unwrap()
+			.get(&Yaml::from_str("hello"))
+			.unwrap()
+			.as_str()
+			.unwrap(),
+		"bro"
+	);
 }
 
 #[test]
