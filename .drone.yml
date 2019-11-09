@@ -5,11 +5,11 @@ name: default
 
 steps:
   - name: test
-    image: rust:slim
+    image: rust
     commands:
       - cargo test
   - name: coverage
-    image: rust:slim
+    image: rust
     commands:
       - apt install openssl libssl-dev
       - cargo install cargo-tarpaulin
