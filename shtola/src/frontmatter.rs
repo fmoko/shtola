@@ -1,6 +1,6 @@
-use yaml_rust::{Yaml, YamlLoader};
+use serde_json::{json, Value};
+use serde_yaml::from_str;
 
-#[allow(dead_code)]
 pub fn lexer(text: &str) -> (String, String) {
 	if text.starts_with("---\n") {
 		let slice_after_marker = &text[4..];
@@ -16,10 +16,10 @@ pub fn lexer(text: &str) -> (String, String) {
 	}
 }
 
-#[allow(dead_code)]
-pub fn to_yaml(matter: &str) -> Vec<Yaml> {
+pub fn to_json(matter: &str) -> Value {
 	if matter.len() == 0 {
-		return Vec::new();
+		return json!(null);
 	}
-	YamlLoader::load_from_str(matter).unwrap()
+	let yaml: Value = from_str(matter).unwrap();
+	yaml
 }

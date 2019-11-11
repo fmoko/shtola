@@ -1,5 +1,6 @@
 use globset::{Glob, GlobSetBuilder};
 use pathdiff::diff_paths;
+use serde_json::json;
 use std::default::Default;
 use std::fs;
 use std::io::{Read, Write};
@@ -7,10 +8,8 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 pub use im::HashMap;
-pub use ware::Ware;
-pub use yaml_rust::Yaml;
-pub use serde_json::Value;
 pub use serde_json as json;
+pub use ware::Ware;
 
 mod frontmatter;
 #[cfg(test)]
@@ -90,7 +89,7 @@ impl Shtola {
 pub struct IR {
 	files: HashMap<PathBuf, ShFile>,
 	config: Config,
-	metadata: HashMap<String, Value>,
+	metadata: HashMap<String, json::Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -116,7 +115,7 @@ impl Default for Config {
 
 #[derive(Debug, Clone)]
 pub struct ShFile {
-	frontmatter: Vec<Yaml>,
+	frontmatter: json::Value,
 	content: Vec<u8>,
 }
 
@@ -136,14 +135,14 @@ fn read_dir(
 		fs::File::open(path)?.read_to_string(&mut content)?;
 		if frontmatter {
 			let (matter, content) = frontmatter::lexer(&content);
-			let yaml = frontmatter::to_yaml(&matter);
+			let json = frontmatter::to_json(&matter);
 			file = ShFile {
-				frontmatter: yaml,
+				frontmatter: json,
 				content: content.into(),
 			};
 		} else {
 			file = ShFile {
-				frontmatter: Vec::new(),
+				frontmatter: json!(null),
 				content: content.into(),
 			};
 		}

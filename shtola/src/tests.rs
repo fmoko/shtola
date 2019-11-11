@@ -1,7 +1,7 @@
-use crate::{Shtola, IR, HashMap, ShFile, Yaml};
 use crate::json::json;
-use std::path::PathBuf;
+use crate::{HashMap, ShFile, Shtola, IR};
 use std::fs;
+use std::path::PathBuf;
 
 #[test]
 fn read_works() {
@@ -66,13 +66,7 @@ fn frontmatter_works() {
 	s.clean(true);
 	let r = s.build().unwrap();
 	let (_, matter_file) = r.files.iter().last().unwrap();
-	let frontmatter = matter_file.frontmatter[0]
-		.as_hash()
-		.unwrap()
-		.get(&Yaml::from_str("hello"))
-		.unwrap()
-		.as_str()
-		.unwrap();
+	let frontmatter = matter_file.frontmatter.get("hello").unwrap();
 	assert_eq!(frontmatter, "bro");
 }
 
@@ -86,7 +80,7 @@ fn no_frontmatter_works() {
 	let r = s.build().unwrap();
 	let (_, matter_file) = r.files.iter().last().unwrap();
 	dbg!(matter_file);
-	assert!(matter_file.frontmatter.is_empty());
+	assert!(matter_file.frontmatter.is_null());
 }
 
 #[test]
@@ -102,7 +96,6 @@ fn ignore_works() {
 	assert_eq!(path.to_str().unwrap(), "not_ignored.md");
 }
 
-
 #[test]
 fn metadata_works() {
 	let mut s = Shtola::new();
@@ -110,8 +103,10 @@ fn metadata_works() {
 	s.destination("../fixtures/dest_meta");
 	s.clean(true);
 	let mw1 = Box::new(|ir: IR| {
-		let metadata = ir.metadata.update("test".into(), json!("foo"))
-															.update("test2".into(), json!({"bar": "baz"}));
+		let metadata = ir
+			.metadata
+			.update("test".into(), json!("foo"))
+			.update("test2".into(), json!({"bar": "baz"}));
 		IR { metadata, ..ir }
 	});
 
