@@ -9,9 +9,11 @@ pub fn plugin() -> Plugin {
 			.iter()
 			.filter(|(p, _)| p.extension().unwrap() == "md");
 		let mut update_hash: HashMap<PathBuf, ShFile> = HashMap::new();
+		let mut removal_hash: HashMap<PathBuf, ShFile> = HashMap::new();
 		for (path, file) in markdown_files {
 			let mut p = path.clone();
 			p.set_extension("html");
+			removal_hash.insert(path.to_path_buf(), ShFile::empty());
 			update_hash.insert(
 				p,
 				ShFile {
@@ -25,8 +27,22 @@ pub fn plugin() -> Plugin {
 			);
 		}
 		IR {
-			files: update_hash.union(ir.files),
+			files: update_hash.union(ir.files).difference(removal_hash),
 			..ir
 		}
 	})
+}
+
+#[test]
+fn it_works() {
+	use shtola::Shtola;
+
+	let mut s = Shtola::new();
+	s.source("../fixtures/markdown");
+	s.destination("../fixtures/markdown/dest");
+	s.clean(true);
+	s.register(plugin());
+	let r = s.build().unwrap();
+	let file: &ShFile = r.files.get(&PathBuf::from("hello.html")).unwrap();
+	assert_eq!(std::str::from_utf8(&file.content).unwrap(), "<h1>Hello!</h1>\n<p>What's going <em>on</em>?</p>\n")
 }

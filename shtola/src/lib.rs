@@ -121,6 +121,12 @@ pub struct ShFile {
 	pub content: Vec<u8>,
 }
 
+impl ShFile {
+	pub fn empty() -> ShFile {
+		ShFile { frontmatter: json!(null), content: Vec::new() }
+	}
+}
+
 fn read_dir(
 	source: &PathBuf,
 	frontmatter: bool,
