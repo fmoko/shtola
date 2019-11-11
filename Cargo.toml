@@ -1,2 +1,6 @@
 [workspace]
-members = ["ware", "shtola"]
+members = [
+	"ware",
+	"shtola",
+	"shtola-markdown"
+]
