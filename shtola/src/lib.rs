@@ -16,8 +16,8 @@ mod frontmatter;
 mod tests;
 
 pub struct Shtola {
-	ware: Ware<IR>,
-	ir: IR,
+	pub ware: Ware<IR>,
+	pub ir: IR,
 }
 
 impl Shtola {
@@ -85,20 +85,22 @@ impl Shtola {
 	}
 }
 
+pub type Plugin = Box<dyn Fn(IR) -> IR>;
+
 #[derive(Debug, Clone)]
 pub struct IR {
-	files: HashMap<PathBuf, ShFile>,
-	config: Config,
-	metadata: HashMap<String, json::Value>,
+	pub files: HashMap<PathBuf, ShFile>,
+	pub config: Config,
+	pub metadata: HashMap<String, json::Value>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Config {
-	ignores: Vec<String>,
-	source: PathBuf,
-	destination: PathBuf,
-	clean: bool,
-	frontmatter: bool,
+	pub ignores: Vec<String>,
+	pub source: PathBuf,
+	pub destination: PathBuf,
+	pub clean: bool,
+	pub frontmatter: bool,
 }
 
 impl Default for Config {
@@ -115,8 +117,8 @@ impl Default for Config {
 
 #[derive(Debug, Clone)]
 pub struct ShFile {
-	frontmatter: json::Value,
-	content: Vec<u8>,
+	pub frontmatter: json::Value,
+	pub content: Vec<u8>,
 }
 
 fn read_dir(
