@@ -442,6 +442,7 @@ name = "shtola-markdown"
 version = "0.1.0"
 dependencies = [
  "comrak 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pretty_env_logger 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "shtola 0.1.0",
 ]
 

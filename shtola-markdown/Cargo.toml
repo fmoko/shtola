@@ -12,3 +12,6 @@ license-file = "LICENSE"
 [dependencies]
 comrak = "0.6.2"
 shtola = { path = "../shtola", version = "0.1.0" }
+
+[dev_dependencies]
+pretty_env_logger = "0.3.1"
