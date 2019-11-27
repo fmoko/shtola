@@ -1,9 +1,14 @@
 [package]
 name = "shtola-markdown"
+description = "Markdown plugin for Shtola"
 version = "0.1.0"
 authors = ["marisa <mokou@posteo.de>"]
 edition = "2018"
+repository = "https://github.com/fmoko/shtola/tree/master/shtola-markdown"
+documentation = "https://docs.rs/shtola-markdown"
+homepage = "https://github.com/fmoko/shtola/tree/master/shtola-markdown"
+license-file = "LICENSE"
 
 [dependencies]
 comrak = "0.6.2"
-shtola = { path = "../shtola" }
+shtola = { path = "../shtola", version = "0.1.0" }
