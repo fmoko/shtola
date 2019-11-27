@@ -27,7 +27,8 @@
 //! }
 //! ```
 
-use globset::{Glob, GlobSetBuilder, GlobSet};
+use globset::{Glob, GlobSet, GlobSetBuilder};
+use log::{debug, info, trace};
 use pathdiff::diff_paths;
 use serde_json::json;
 use std::default::Default;
@@ -37,6 +38,7 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 pub use im::HashMap;
+pub use log;
 pub use serde_json as json;
 pub use ware::Ware;
 
@@ -123,8 +125,13 @@ impl Shtola {
 	/// - Runs the middleware chain, executing all plugins
 	/// - Writes the result back to the destination directory
 	pub fn build(&mut self) -> Result<IR, std::io::Error> {
+		info!("Starting Shtola");
+		trace!("Starting IR config: {:?}", self.ir.config);
 		if self.ir.config.clean {
+			info!("Cleaning before build...");
+			debug!("Removing {:?}", &self.ir.config.destination);
 			fs::remove_dir_all(&self.ir.config.destination)?;
+			debug!("Recreating {:?}", &self.ir.config.destination);
 			fs::create_dir_all(&self.ir.config.destination)
 				.expect("Unable to recreate destination directory!");
 		}
@@ -133,12 +140,19 @@ impl Shtola {
 		for item in &self.ir.config.ignores {
 			builder.add(Glob::new(item).unwrap());
 		}
+		trace!("Globs: {:?}", &builder);
 		let set = builder.build().unwrap();
+		trace!("Globset: {:?}", &set);
+		info!("Reading files...");
 		let files = read_dir(&self.ir.config.source, self.ir.config.frontmatter, set)?;
+		trace!("Files: {:?}", &files);
 
 		self.ir.files = files;
+		info!("Running plugins...");
 		let result_ir = self.ware.run(self.ir.clone());
+		trace!("Result IR: {:?}", &result_ir);
 		write_dir(result_ir.clone(), &self.ir.config.destination)?;
+		info!("Build done!");
 		Ok(result_ir)
 	}
 }
@@ -211,7 +225,10 @@ impl ShFile {
 	/// }
 	/// ```
 	pub fn empty() -> ShFile {
-		ShFile { frontmatter: json!(null), content: Vec::new() }
+		ShFile {
+			frontmatter: json!(null),
+			content: Vec::new(),
+		}
 	}
 }
 
@@ -225,6 +242,7 @@ fn read_dir(
 		.into_iter()
 		.filter_entry(|e| {
 			let path = diff_paths(e.path(), source).unwrap();
+			trace!("Read Filter: {:?} matches? {}", &path, set.is_match(&path));
 			!set.is_match(path)
 		})
 		.filter(|e| !e.as_ref().ok().unwrap().file_type().is_dir());
@@ -233,9 +251,14 @@ fn read_dir(
 		let path = entry.path();
 		let file: ShFile;
 		let mut content = String::new();
+		debug!("Reading file at {:?}", &path);
 		fs::File::open(path)?.read_to_string(&mut content)?;
 		if frontmatter {
 			let (matter, content) = frontmatter::lexer(&content);
+			if matter.len() > 0 {
+				debug!("Lexing frontmatter for {:?}", &path);
+				trace!("Frontmatter: {:?}", &matter);
+			}
 			let json = frontmatter::to_json(&matter);
 			file = ShFile {
 				frontmatter: json,
@@ -255,7 +278,8 @@ fn read_dir(
 
 fn write_dir(ir: IR, dest: &PathBuf) -> Result<(), std::io::Error> {
 	for (path, file) in ir.files {
-		let dest_path = dest.join(path);
+		let dest_path = dest.join(&path);
+		debug!("Writing {:?} to {:?}", &path, &dest_path);
 		fs::create_dir_all(dest_path.parent().unwrap())
 			.expect("Unable to create destination subdirectory!");
 		fs::File::create(dest_path)?.write_all(&file.content)?;

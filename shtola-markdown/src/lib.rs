@@ -44,5 +44,8 @@ fn it_works() {
 	s.register(plugin());
 	let r = s.build().unwrap();
 	let file: &ShFile = r.files.get(&PathBuf::from("hello.html")).unwrap();
-	assert_eq!(std::str::from_utf8(&file.content).unwrap(), "<h1>Hello!</h1>\n<p>What's going <em>on</em>?</p>\n")
+	assert_eq!(
+		std::str::from_utf8(&file.content).unwrap(),
+		"<h1>Hello!</h1>\n<p>What's going <em>on</em>?</p>\n"
+	)
 }
