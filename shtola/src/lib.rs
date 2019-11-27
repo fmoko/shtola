@@ -33,6 +33,7 @@ use pathdiff::diff_paths;
 use serde_json::json;
 use std::default::Default;
 use std::fs;
+use std::time::Instant;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use walkdir::WalkDir;
@@ -125,6 +126,7 @@ impl Shtola {
 	/// - Runs the middleware chain, executing all plugins
 	/// - Writes the result back to the destination directory
 	pub fn build(&mut self) -> Result<IR, std::io::Error> {
+		let now = Instant::now();
 		info!("Starting Shtola");
 		trace!("Starting IR config: {:?}", self.ir.config);
 		if self.ir.config.clean {
@@ -152,7 +154,7 @@ impl Shtola {
 		let result_ir = self.ware.run(self.ir.clone());
 		trace!("Result IR: {:?}", &result_ir);
 		write_dir(result_ir.clone(), &self.ir.config.destination)?;
-		info!("Build done!");
+		info!("Build done in {}s", now.elapsed().as_secs());
 		Ok(result_ir)
 	}
 }
