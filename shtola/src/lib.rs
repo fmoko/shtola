@@ -153,6 +153,7 @@ impl Shtola {
 		info!("Running plugins...");
 		let result_ir = self.ware.run(self.ir.clone());
 		trace!("Result IR: {:?}", &result_ir);
+		info!("Writing to disk...");
 		write_dir(result_ir.clone(), &self.ir.config.destination)?;
 		info!("Build done in {}s", now.elapsed().as_secs());
 		Ok(result_ir)
