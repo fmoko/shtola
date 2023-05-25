@@ -1,0 +1,9 @@
+{
+  "name": "shtola",
+  "repository": "https://github.com/shadows-withal/shtola",
+  "description": "static site generator generator",
+  "homepage": "",
+  "changelog": false,
+  "theme": "dark",
+  "path_prefix": "shtola"
+}
